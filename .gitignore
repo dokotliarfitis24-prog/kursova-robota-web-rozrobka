@@ -43,10 +43,6 @@ ENV/
 *.swo
 *~
 
-# OS
-.DS_Store
-Thumbs.db
-
 # Firebase
 *firebase*adminsdk*.json
 *service*account*.json
@@ -62,6 +58,3 @@ cloudinary.json
 # Environment files
 *.env
 *.env.*
-
-# JSON files (including Firebase service account keys)
-*.json

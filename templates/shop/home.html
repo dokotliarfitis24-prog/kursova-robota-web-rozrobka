@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Головна - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h2>Професійна зброя та аксесуари</h2>
+            <p>Широкий вибір вогнепальної, пневматичної та холодної зброї</p>
+            <a href="{% url 'shop:catalog' %}" class="btn btn-primary">Переглянути каталог</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <section class="categories-section">
+        <h2 class="section-title">Популярні категорії</h2>
+        <div class="categories-grid">
+            {% for category in categories %}
+                <div class="category-card">
+                    <a href="{% url 'shop:category_detail' category.slug %}">
+                        {% if category.image %}
+                            <img src="{{ category.image }}" alt="{{ category.name }}">
+                        {% else %}
+                            <div class="category-placeholder">Немає зображення</div>
+                        {% endif %}
+                        <h3>{{ category.name }}</h3>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if popular_products %}
+    <section class="products-section">
+        <h2 class="section-title">Популярні товари</h2>
+        <div class="products-grid">
+            {% for product in popular_products %}
+                <div class="product-card">
+                    <a href="{% url 'shop:product_detail' product.slug %}">
+                        <div class="product-image">
+                            {% if product.image %}
+                                <img src="{{ product.image }}" alt="{{ product.name }}">
+                            {% else %}
+                                <div class="product-placeholder">Немає зображення</div>
+                            {% endif %}
+                            {% if product.stock == 0 %}
+                                <span class="badge badge-out-of-stock">Немає в наявності</span>
+                            {% elif product.is_popular %}
+                                <span class="badge badge-popular">Популярний</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p class="product-manufacturer">{{ product.manufacturer|default:"—" }}</p>
+                            <p class="product-price">{{ product.price }} грн</p>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+

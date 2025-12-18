@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Каталог товарів - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="catalog-layout">
+        <aside class="filters-sidebar">
+            <h3>Фільтри</h3>
+            <form method="get" class="filters-form">
+                <div class="filter-group">
+                    <label>Категорія</label>
+                    <select name="category">
+                        <option value="">Всі категорії</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Виробник</label>
+                    <select name="manufacturer">
+                        <option value="">Всі виробники</option>
+                        {% for mfr in manufacturers %}
+                            <option value="{{ mfr }}" {% if current_manufacturer == mfr %}selected{% endif %}>{{ mfr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Ціна від</label>
+                    <input type="number" name="min_price" value="{{ current_min_price|default:'' }}" placeholder="0" min="0" step="0.01">
+                </div>
+
+                <div class="filter-group">
+                    <label>Ціна до</label>
+                    <input type="number" name="max_price" value="{{ current_max_price|default:'' }}" placeholder="100000" min="0" step="0.01">
+                </div>
+
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" name="in_stock" value="true" {% if current_in_stock == 'true' %}checked{% endif %}>
+                        Тільки в наявності
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" name="popular" value="true" {% if current_popular == 'true' %}checked{% endif %}>
+                        Тільки популярні
+                    </label>
+                </div>
+
+                <div class="filter-buttons">
+                    <button type="submit" class="btn btn-primary">Застосувати</button>
+                    <a href="{% url 'shop:catalog' %}" class="btn btn-secondary">Скинути</a>
+                </div>
+            </form>
+        </aside>
+
+        <main class="catalog-main">
+            <div class="catalog-header">
+                <h1>Каталог товарів</h1>
+                <div class="sort-controls">
+                    <form method="get" class="sort-form">
+                        {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                        {% if current_manufacturer %}<input type="hidden" name="manufacturer" value="{{ current_manufacturer }}">{% endif %}
+                        {% if current_min_price %}<input type="hidden" name="min_price" value="{{ current_min_price }}">{% endif %}
+                        {% if current_max_price %}<input type="hidden" name="max_price" value="{{ current_max_price }}">{% endif %}
+                        {% if current_in_stock %}<input type="hidden" name="in_stock" value="{{ current_in_stock }}">{% endif %}
+                        {% if current_popular %}<input type="hidden" name="popular" value="{{ current_popular }}">{% endif %}
+                        <label>Сортувати:</label>
+                        <select name="sort" onchange="this.form.submit()">
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Новинки</option>
+                            <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Ціна: від низької</option>
+                            <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Ціна: від високої</option>
+                            <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Популярні</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <div class="products-grid">
+                {% for product in page_obj %}
+                    <div class="product-card">
+                        <a href="{% url 'shop:product_detail' product.slug %}" class="product-link">
+                            <div class="product-image">
+                                {% if product.image %}
+                                    <img src="{{ product.image }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <div class="product-placeholder">Немає зображення</div>
+                                {% endif %}
+                                {% if product.stock == 0 %}
+                                    <span class="badge badge-out-of-stock">Немає в наявності</span>
+                                {% elif product.is_popular %}
+                                    <span class="badge badge-popular">Популярний</span>
+                                {% endif %}
+                            </div>
+                            <div class="product-info">
+                                <h3>{{ product.name }}</h3>
+                                <p class="product-manufacturer">{{ product.manufacturer|default:"—" }}</p>
+                                <div class="product-price-row">
+                                    <p class="product-price">{{ product.price }} грн</p>
+                                    <div class="product-actions">
+                                        {% if product.stock > 0 %}
+                                            <form method="post" action="{% url 'shop:add_to_cart' product.id %}" class="add-to-cart-form-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary btn-buy">Купити</button>
+                                            </form>
+                                        {% else %}
+                                            <button type="button" class="btn btn-secondary btn-buy" disabled>Немає в наявності</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% empty %}
+                    <p class="no-results">Товарів не знайдено</p>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_manufacturer %}&manufacturer={{ current_manufacturer }}{% endif %}{% if current_min_price %}&min_price={{ current_min_price }}{% endif %}{% if current_max_price %}&max_price={{ current_max_price }}{% endif %}{% if current_in_stock %}&in_stock={{ current_in_stock }}{% endif %}{% if current_popular %}&popular={{ current_popular }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="btn">Попередня</a>
+                {% endif %}
+                <span class="page-info">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_manufacturer %}&manufacturer={{ current_manufacturer }}{% endif %}{% if current_min_price %}&min_price={{ current_min_price }}{% endif %}{% if current_max_price %}&max_price={{ current_max_price }}{% endif %}{% if current_in_stock %}&in_stock={{ current_in_stock }}{% endif %}{% if current_popular %}&popular={{ current_popular }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="btn">Наступна</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+
+

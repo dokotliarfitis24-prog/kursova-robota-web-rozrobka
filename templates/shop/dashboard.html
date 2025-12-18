@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Особистий кабінет - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Особистий кабінет</h1>
+    
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar">
+            <ul class="dashboard-menu">
+                <li><a href="{% url 'shop:dashboard' %}" class="active">Мої замовлення</a></li>
+                <li><a href="{% url 'shop:profile_edit' %}">Редагувати профіль</a></li>
+            </ul>
+        </aside>
+
+        <main class="dashboard-content">
+            <h2>Історія замовлень</h2>
+            
+            {% if orders %}
+                <div class="orders-list">
+                    {% for order in orders %}
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <h3>Замовлення #{{ order.id }}</h3>
+                                    <p class="order-date">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+                                </div>
+                                <div>
+                                    <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+                                    <p class="order-total">{{ order.total_price }} грн</p>
+                                </div>
+                            </div>
+                            <div class="order-actions">
+                                <a href="{% url 'shop:order_detail' order.id %}" class="btn btn-secondary">Деталі</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-orders">У вас поки немає замовлень</p>
+                <a href="{% url 'shop:catalog' %}" class="btn btn-primary">Переглянути каталог</a>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+
+

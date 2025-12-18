@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Кошик - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Кошик</h1>
+    
+    {% if cart_items %}
+    <div class="cart">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Ціна</th>
+                    <th>Кількість</th>
+                    <th>Сума</th>
+                    <th>Дія</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td class="cart-item-info" data-label="Товар">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image }}" alt="{{ item.product.name }}" class="cart-item-image">
+                            {% else %}
+                                <div class="cart-item-placeholder">Немає фото</div>
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'shop:product_detail' item.product.slug %}">{{ item.product.name }}</a>
+                                <p class="cart-item-manufacturer">{{ item.product.manufacturer|default:"—" }}</p>
+                            </div>
+                        </td>
+                        <td data-label="Ціна">{{ item.product.price }} грн</td>
+                        <td data-label="Кількість">
+                            <form method="post" action="{% url 'shop:update_cart' item.product.id %}" class="quantity-form">
+                                {% csrf_token %}
+                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td data-label="Сума">{{ item.total }} грн</td>
+                        <td data-label="Дія">
+                            <form method="post" action="{% url 'shop:remove_from_cart' item.product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-small">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>Загальна сума:</strong></td>
+                    <td><strong>{{ cart_total }} грн</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="cart-actions">
+            <a href="{% url 'shop:catalog' %}" class="btn btn-secondary">Продовжити покупки</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'shop:checkout' %}" class="btn btn-primary">Оформити замовлення</a>
+            {% else %}
+                <a href="{% url 'shop:login' %}?next={% url 'shop:checkout' %}" class="btn btn-primary">Увійти для оформлення</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-cart">
+        <p>Ваш кошик порожній</p>
+        <a href="{% url 'shop:catalog' %}" class="btn btn-primary">Переглянути каталог</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+

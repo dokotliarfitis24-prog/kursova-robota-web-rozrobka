@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Керування замовленнями - Адмін-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .admin-header h1 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .orders-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .orders-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .orders-table th {
+        padding: 15px;
+        text-align: left;
+        background-color: #2c3e50;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .orders-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .orders-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .status-processing {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .status-completed {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .status-cancelled {
+        background-color: #dc3545;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Керування замовленнями</h1>
+        <a href="{% url 'firebase_admin:home' %}" class="btn btn-secondary">← Назад</a>
+    </div>
+
+    <div class="orders-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Клієнт</th>
+                    <th>Email</th>
+                    <th>Телефон</th>
+                    <th>Сума</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><strong>#{{ order.id|truncatechars:8 }}</strong></td>
+                    <td>{{ order.first_name }} {{ order.last_name }}</td>
+                    <td>{{ order.email }}</td>
+                    <td>{{ order.phone }}</td>
+                    <td><strong>{{ order.total_price|floatformat:2 }} грн</strong></td>
+                    <td>
+                        <span class="status-badge status-{{ order.status }}">
+                            {% if order.status == 'pending' %}Очікує
+                            {% elif order.status == 'processing' %}Обробляється
+                            {% elif order.status == 'completed' %}Виконано
+                            {% elif order.status == 'cancelled' %}Скасовано
+                            {% else %}{{ order.status }}{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if order.created_at %}
+                            {{ order.created_at|date:"d.m.Y H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <a href="{% url 'firebase_admin:order_detail' order.id %}" class="btn btn-secondary" style="text-decoration: none; padding: 6px 12px; background-color: #007bff; color: white; border-radius: 3px; font-size: 12px;">Деталі</a>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="update_status" value="1">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <select name="status" onchange="this.form.submit()" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Очікує</option>
+                                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Обробляється</option>
+                                    <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Відправлено</option>
+                                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Доставлено</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Скасовано</option>
+                                </select>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px;">Замовлень немає</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Контакти - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Контакти</h1>
+    <div class="contacts-page">
+        <div class="contacts-info">
+            <h2>Наші контакти</h2>
+            <div class="contact-item">
+                <h3>Адреса</h3>
+                <p>м. Київ, вул. Прикладна, 1</p>
+            </div>
+            <div class="contact-item">
+                <h3>Телефон</h3>
+                <p>+380 (XX) XXX-XX-XX</p>
+            </div>
+            <div class="contact-item">
+                <h3>Email</h3>
+                <p>info@weaponshop.com</p>
+            </div>
+            <div class="contact-item">
+                <h3>Години роботи</h3>
+                <p>Пн-Пт: 9:00 - 18:00<br>Сб: 10:00 - 16:00<br>Нд: вихідний</p>
+            </div>
+        </div>
+        <div class="contacts-map">
+            <h2>Як нас знайти</h2>
+            <div class="map-placeholder">
+                <p>Тут буде карта Google Maps</p>
+                <p><small>Для інтеграції додайте API ключ Google Maps</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

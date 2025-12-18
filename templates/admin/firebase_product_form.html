@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }} - Адмін-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .admin-header h1 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .product-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .product-form h2 {
+        margin-top: 0;
+        margin-bottom: 25px;
+        color: #2c3e50;
+        font-size: 24px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+    }
+    
+    .image-upload-group {
+        margin-bottom: 20px;
+    }
+    
+    .image-upload-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .image-preview {
+        margin-top: 10px;
+    }
+    
+    .image-preview img {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        padding: 5px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+    }
+    
+    .checkbox-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>{{ form_title }}</h1>
+        <a href="{% url 'firebase_admin:products' %}" class="btn btn-secondary">← Назад</a>
+    </div>
+
+    <div class="product-form">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Назва *</label>
+                    <input type="text" name="name" id="name" value="{% if form_data %}{{ form_data.name }}{% elif product %}{{ product.name }}{% endif %}" required>
+                </div>
+                <div class="form-group">
+                    <label for="slug">URL (slug) <small style="color: #6c757d; font-weight: normal;">(генерується автоматично)</small></label>
+                    <input type="text" name="slug" id="slug" value="{% if form_data %}{{ form_data.slug }}{% elif product %}{{ product.slug }}{% endif %}">
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="category_id">Категорія *</label>
+                    <select name="category_id" id="category_id" required>
+                        <option value="">Виберіть категорію</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if form_data and form_data.category_id == cat.id %}selected{% elif product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Опис</label>
+                <textarea name="description" id="description" rows="4">{% if form_data %}{{ form_data.description }}{% elif product %}{{ product.description }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="manufacturer">Виробник</label>
+                    <input type="text" name="manufacturer" id="manufacturer" value="{% if form_data %}{{ form_data.manufacturer }}{% elif product %}{{ product.manufacturer }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label for="caliber">Калібр</label>
+                    <input type="text" name="caliber" id="caliber" value="{% if form_data %}{{ form_data.caliber }}{% elif product %}{{ product.caliber }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label for="barrel_length">Довжина ствола</label>
+                    <input type="text" name="barrel_length" id="barrel_length" value="{% if form_data %}{{ form_data.barrel_length }}{% elif product %}{{ product.barrel_length }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label for="weight">Вага</label>
+                    <input type="text" name="weight" id="weight" value="{% if form_data %}{{ form_data.weight }}{% elif product %}{{ product.weight }}{% endif %}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="material">Матеріал</label>
+                <input type="text" name="material" id="material" value="{% if form_data %}{{ form_data.material }}{% elif product %}{{ product.material }}{% endif %}">
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="price">Ціна (грн) *</label>
+                    <input type="text" name="price" id="price" value="{% if form_data.price %}{{ form_data.price }}{% elif product.price is not None %}{{ product.price }}{% else %}0.00{% endif %}" required>
+                </div>
+                <div class="form-group">
+                    <label for="stock">Наявність *</label>
+                    <input type="text" name="stock" id="stock" value="{% if form_data.stock %}{{ form_data.stock }}{% elif product.stock is not None %}{{ product.stock }}{% else %}0{% endif %}" required>
+                </div>
+            </div>
+            
+            <!-- Зображення -->
+            <div style="margin-top: 30px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">Зображення</h3>
+                <div class="form-grid">
+                    <div class="image-upload-group">
+                        <label>Головне зображення *</label>
+                        <input type="file" name="image" id="image" accept="image/*">
+                        <input type="url" name="image_url" id="image_url" placeholder="Або вставте URL зображення" style="margin-top: 8px; width: 100%; padding: 8px;" value="{% if form_data %}{{ form_data.image }}{% elif product and product.image %}{{ product.image }}{% endif %}">
+                        <div id="image_preview" class="image-preview">
+                            {% if form_data and form_data.image %}
+                            <img src="{{ form_data.image }}" alt="Preview">
+                            {% elif product and product.image %}
+                            <img src="{{ product.image }}" alt="Preview">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="image-upload-group">
+                        <label>Зображення 2</label>
+                        <input type="file" name="image2" id="image2" accept="image/*">
+                        <input type="url" name="image2_url" id="image2_url" placeholder="Або вставте URL зображення" style="margin-top: 8px; width: 100%; padding: 8px;" value="{% if form_data %}{{ form_data.image2 }}{% elif product and product.image2 %}{{ product.image2 }}{% endif %}">
+                        <div id="image2_preview" class="image-preview">
+                            {% if form_data and form_data.image2 %}
+                            <img src="{{ form_data.image2 }}" alt="Preview">
+                            {% elif product and product.image2 %}
+                            <img src="{{ product.image2 }}" alt="Preview">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="image-upload-group">
+                        <label>Зображення 3</label>
+                        <input type="file" name="image3" id="image3" accept="image/*">
+                        <input type="url" name="image3_url" id="image3_url" placeholder="Або вставте URL зображення" style="margin-top: 8px; width: 100%; padding: 8px;" value="{% if form_data %}{{ form_data.image3 }}{% elif product and product.image3 %}{{ product.image3 }}{% endif %}">
+                        <div id="image3_preview" class="image-preview">
+                            {% if form_data and form_data.image3 %}
+                            <img src="{{ form_data.image3 }}" alt="Preview">
+                            {% elif product and product.image3 %}
+                            <img src="{{ product.image3 }}" alt="Preview">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="image-upload-group">
+                        <label>Зображення 4</label>
+                        <input type="file" name="image4" id="image4" accept="image/*">
+                        <input type="url" name="image4_url" id="image4_url" placeholder="Або вставте URL зображення" style="margin-top: 8px; width: 100%; padding: 8px;" value="{% if form_data %}{{ form_data.image4 }}{% elif product and product.image4 %}{{ product.image4 }}{% endif %}">
+                        <div id="image4_preview" class="image-preview">
+                            {% if form_data and form_data.image4 %}
+                            <img src="{{ form_data.image4 }}" alt="Preview">
+                            {% elif product and product.image4 %}
+                            <img src="{{ product.image4 }}" alt="Preview">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="is_active" id="is_active" {% if form_data and form_data.is_active %}checked{% elif not product or product.is_active %}checked{% endif %}>
+                    Активний
+                </label>
+                <label>
+                    <input type="checkbox" name="is_popular" id="is_popular" {% if form_data and form_data.is_popular %}checked{% elif product and product.is_popular %}checked{% endif %}>
+                    Популярний
+                </label>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Зберегти</button>
+                <a href="{% url 'firebase_admin:products' %}" class="btn btn-secondary">Скасувати</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Автоматична генерація slug з назви
+function generateSlug(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Видаляємо спеціальні символи
+        .replace(/[\s_-]+/g, '-') // Замінюємо пробіли та підкреслення на дефіси
+        .replace(/^-+|-+$/g, ''); // Видаляємо дефіси на початку та в кінці
+}
+
+var nameInput = document.getElementById('name');
+var slugInput = document.getElementById('slug');
+var isEditingSlug = false;
+
+if (nameInput && slugInput) {
+    // Генерація slug при введенні назви
+    nameInput.addEventListener('input', function() {
+        if (!isEditingSlug) {
+            slugInput.value = generateSlug(this.value);
+        }
+    });
+    
+    // Дозволяємо редагувати slug вручну
+    slugInput.addEventListener('focus', function() {
+        isEditingSlug = true;
+    });
+    
+    slugInput.addEventListener('blur', function() {
+        // Якщо поле порожнє, генеруємо знову
+        if (!this.value.trim()) {
+            isEditingSlug = false;
+            this.value = generateSlug(nameInput.value);
+        }
+    });
+    
+    // Кнопка для ручного редагування slug
+    slugInput.addEventListener('keydown', function() {
+        isEditingSlug = true;
+    });
+}
+
+// Оновлення preview при зміні URL
+['image', 'image2', 'image3', 'image4'].forEach(function(id) {
+    var urlInput = document.getElementById(id + '_url');
+    if (urlInput) {
+        urlInput.addEventListener('input', function() {
+            var preview = document.getElementById(id + '_preview');
+            if (preview && this.value) {
+                preview.innerHTML = '<img src="' + this.value + '" alt="Preview">';
+            } else if (preview) {
+                preview.innerHTML = '';
+            }
+        });
+    }
+    
+    // Preview при виборі файлу
+    var fileInput = document.getElementById(id);
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            var preview = document.getElementById(id + '_preview');
+            if (e.target.files && e.target.files[0] && preview) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

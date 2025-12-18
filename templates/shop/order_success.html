@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Замовлення прийнято - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="order-success">
+        <div class="success-icon">✓</div>
+        <h1>Замовлення успішно оформлено!</h1>
+        <p class="order-number">Номер замовлення: <strong>#{{ order.id }}</strong></p>
+        <p>На вашу електронну пошту <strong>{{ order.email }}</strong> надіслано підтвердження замовлення.</p>
+        <p>Наш менеджер зв'яжеться з вами найближчим часом для уточнення деталей.</p>
+        
+        <div class="order-summary">
+            <h2>Деталі замовлення</h2>
+            <p><strong>Сума:</strong> {{ order.total_price }} грн</p>
+            <p><strong>Спосіб оплати:</strong> {{ order.get_payment_method_display }}</p>
+            <p><strong>Адреса доставки:</strong> {{ order.address }}, {{ order.city }}</p>
+        </div>
+
+        <div class="success-actions">
+            <a href="{% url 'shop:dashboard' %}" class="btn btn-primary">Переглянути в кабінеті</a>
+            <a href="{% url 'shop:catalog' %}" class="btn btn-secondary">Продовжити покупки</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

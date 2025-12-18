@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редагування профілю - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Редагування профілю</h1>
+    
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar">
+            <ul class="dashboard-menu">
+                <li><a href="{% url 'shop:dashboard' %}">Мої замовлення</a></li>
+                <li><a href="{% url 'shop:profile_edit' %}" class="active">Редагувати профіль</a></li>
+            </ul>
+        </aside>
+
+        <main class="dashboard-content">
+            <form method="post" class="profile-form">
+                {% csrf_token %}
+                <h2>Особиста інформація</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ user_form.first_name.label }}</label>
+                        {{ user_form.first_name }}
+                        {{ user_form.first_name.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ user_form.last_name.label }}</label>
+                        {{ user_form.last_name }}
+                        {{ user_form.last_name.errors }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{{ user_form.email.label }}</label>
+                    {{ user_form.email }}
+                    {{ user_form.email.errors }}
+                </div>
+
+                <h2>Контактна інформація</h2>
+                <div class="form-group">
+                    <label>{{ profile_form.phone.label }}</label>
+                    {{ profile_form.phone }}
+                    {{ profile_form.phone.errors }}
+                </div>
+                <div class="form-group">
+                    <label>{{ profile_form.address.label }}</label>
+                    {{ profile_form.address }}
+                    {{ profile_form.address.errors }}
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ profile_form.city.label }}</label>
+                        {{ profile_form.city }}
+                        {{ profile_form.city.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ profile_form.postal_code.label }}</label>
+                        {{ profile_form.postal_code }}
+                        {{ profile_form.postal_code.errors }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+            </form>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+
+

@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Керування коментарями - Адмін-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .admin-header h1 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .filter-tab {
+        padding: 8px 16px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #495057;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    
+    .filter-tab:hover {
+        background: #e9ecef;
+        text-decoration: none;
+        color: #495057;
+    }
+    
+    .filter-tab.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .comments-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .comments-table thead {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .comments-table th {
+        padding: 15px;
+        text-align: left;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .comments-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+    
+    .comments-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .comments-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .comment-text {
+        max-width: 400px;
+        word-wrap: break-word;
+        line-height: 1.5;
+        color: #495057;
+    }
+    
+    .comment-author {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    
+    .comment-date {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .comment-rating {
+        color: #ffc107;
+        font-size: 16px;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .badge-success {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .product-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+    
+    .product-link:hover {
+        text-decoration: underline;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Керування коментарями</h1>
+        <a href="{% url 'firebase_admin:home' %}" class="btn btn-secondary">← Назад</a>
+    </div>
+    
+    <div class="filter-tabs">
+        <a href="?status=all" class="filter-tab {% if filter_status == 'all' %}active{% endif %}">
+            Всі ({{ comments_with_products|length }})
+        </a>
+        <a href="?status=pending" class="filter-tab {% if filter_status == 'pending' %}active{% endif %}">
+            На модерації ({{ pending_count }})
+        </a>
+        <a href="?status=approved" class="filter-tab {% if filter_status == 'approved' %}active{% endif %}">
+            Схвалені ({{ approved_count }})
+        </a>
+    </div>
+    
+    <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <table class="comments-table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Автор</th>
+                    <th>Коментар</th>
+                    <th>Оцінка</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in comments_with_products %}
+                {% with comment=item.comment product=item.product %}
+                <tr>
+                    <td>
+                        {% if product %}
+                            <a href="{% url 'shop:product_detail' product.slug %}" class="product-link" target="_blank">
+                                {{ product.name|truncatewords:5 }}
+                            </a>
+                        {% else %}
+                            <span style="color: #6c757d;">Товар видалено</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="comment-author">{{ comment.username }}</div>
+                    </td>
+                    <td>
+                        <div class="comment-text">{{ comment.text|truncatewords:20 }}</div>
+                    </td>
+                    <td>
+                        {% if comment.rating %}
+                        <div class="comment-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= comment.rating %}★{% else %}☆{% endif %}
+                            {% endfor %}
+                            <span style="color: #6c757d; font-size: 12px; margin-left: 5px;">({{ comment.rating }}/5)</span>
+                        </div>
+                        {% else %}
+                        <span style="color: #6c757d;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="comment-date">
+                            {% if comment.created_at %}
+                                {{ comment.created_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if comment.is_approved %}
+                        <span class="badge badge-success">Схвалено</span>
+                        {% else %}
+                        <span class="badge badge-warning">На модерації</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if not comment.is_approved %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="btn btn-success btn-sm">Схвалити</button>
+                            </form>
+                            {% endif %}
+                            {% if comment.is_approved %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn btn-secondary btn-sm">Відхилити</button>
+                            </form>
+                            {% endif %}
+                            <form method="post" style="display: inline; margin: 0;" id="delete-form-{{ comment.id }}" data-item-name="{{ comment.text|truncatewords:10 }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <input type="hidden" name="action" value="delete">
+                                <button type="button" onclick="confirmDelete('{{ comment.id }}', '{{ comment.text|truncatewords:10|escapejs }}', 'коментар')" class="btn btn-danger btn-sm">Видалити</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <div style="font-size: 18px; margin-bottom: 10px;">Коментарів немає</div>
+                            <div style="color: #6c757d;">Поки що немає коментарів для модерації</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Модальне вікно для підтвердження видалення
+function confirmDelete(itemId, itemText, itemType) {
+    // Створюємо модальне вікно
+    var modal = document.createElement('div');
+    modal.id = 'delete-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+    
+    var modalContent = document.createElement('div');
+    modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+    
+    modalContent.innerHTML = `
+        <h2 style="margin-top: 0; color: #dc3545; font-size: 24px;">Підтвердження видалення</h2>
+        <p style="margin-bottom: 20px; color: #333;">Для підтвердження видалення ${itemType}, введіть початок тексту коментаря:</p>
+        <div style="background: #f8f9fa; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-size: 13px; color: #495057; max-height: 100px; overflow-y: auto;">
+            "${itemText}"
+        </div>
+        <input type="text" id="delete-confirm-input" placeholder="Введіть початок тексту коментаря для підтвердження" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; margin-bottom: 20px; box-sizing: border-box;">
+        <div id="delete-error" style="color: #dc3545; margin-bottom: 15px; font-size: 14px; display: none;"></div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">Скасувати</button>
+            <button type="button" onclick="submitDelete('${itemId}', '${itemText.replace(/'/g, "\\'")}', '${itemType}')" class="btn btn-danger">Видалити</button>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Фокус на поле введення
+    setTimeout(function() {
+        document.getElementById('delete-confirm-input').focus();
+    }, 100);
+    
+    // Закриття по Escape
+    var escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Закриття по кліку на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+}
+
+function closeDeleteModal() {
+    var modal = document.getElementById('delete-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function submitDelete(itemId, itemText, itemType) {
+    var input = document.getElementById('delete-confirm-input');
+    var errorDiv = document.getElementById('delete-error');
+    var enteredText = input.value.trim();
+    
+    // Перевіряємо, чи введений текст збігається з початком тексту коментаря
+    // Беремо перші слова для порівняння (ігноруємо регістр)
+    var itemTextLower = itemText.toLowerCase();
+    var enteredTextLower = enteredText.toLowerCase();
+    
+    if (enteredText.length < 10 || !itemTextLower.startsWith(enteredTextLower)) {
+        errorDiv.textContent = 'Текст не співпадає! Будь ласка, введіть початок тексту коментаря (мінімум 10 символів).';
+        errorDiv.style.display = 'block';
+        input.style.borderColor = '#dc3545';
+        input.focus();
+        return;
+    }
+    
+    // Якщо текст співпадає, відправляємо форму
+    var form = document.getElementById('delete-form-' + itemId);
+    if (form) {
+        closeDeleteModal();
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+

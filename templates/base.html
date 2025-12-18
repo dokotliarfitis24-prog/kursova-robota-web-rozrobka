@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Інтернет-магазин зброї{% endblock %}</title>
+    {% load static %}
+    <link rel="icon" type="image/jpeg" href="https://res.cloudinary.com/dorinrngy/image/upload/v1765837337/assets/favicon.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="https://res.cloudinary.com/dorinrngy/image/upload/v1765837337/assets/favicon.jpg">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <a href="{% url 'shop:home' %}">
+                        <h1>WeaponShop</h1>
+                    </a>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'shop:catalog' %}" class="btn-link">Каталог</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'shop:dashboard' %}" class="btn-link">Кабінет</a>
+                        {% if user.is_staff %}
+                            <a href="{% url 'firebase_admin:home' %}" class="btn-link admin-link" title="Адмін-панель">
+                                ⚙️ Адмінка
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'shop:logout' %}" class="btn-link">Вихід</a>
+                    {% else %}
+                        <a href="{% url 'shop:login' %}" class="btn-link">Вхід</a>
+                        <a href="{% url 'shop:register' %}" class="btn-link">Реєстрація</a>
+                    {% endif %}
+                    <a href="{% url 'shop:cart' %}" class="cart-link">
+                        Кошик
+                        {% if cart_items_count > 0 %}
+                            <span class="cart-count">({{ cart_items_count }})</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{% url 'shop:home' %}">Головна</a></li>
+                    <li><a href="{% url 'shop:catalog' %}">Каталог</a></li>
+                    <li><a href="{% url 'shop:about' %}">Про нас</a></li>
+                    <li><a href="{% url 'shop:contacts' %}">Контакти</a></li>
+                </ul>
+                <form method="get" action="{% url 'shop:search' %}" class="search-form">
+                    <input type="text" name="search" placeholder="Пошук товарів..." value="{{ search_query|default:'' }}">
+                    <button type="submit">Пошук</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Інформація</h3>
+                    <ul>
+                        <li><a href="{% url 'shop:about' %}">Про нас</a></li>
+                        <li><a href="{% url 'shop:contacts' %}">Контакти</a></li>
+                        <li><a href="{% url 'shop:privacy_policy' %}">Політика конфіденційності</a></li>
+                        <li><a href="{% url 'shop:terms' %}">Умови використання</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Категорії</h3>
+                    <ul>
+                        {% load shop_tags %}
+                        {% get_categories as footer_categories %}
+                        {% for category in footer_categories|slice:":4" %}
+                            <li><a href="{% url 'shop:category_detail' category.slug %}">{{ category.name }}</a></li>
+                        {% empty %}
+                            <li><a href="{% url 'shop:catalog' %}">Каталог</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Контакти</h3>
+                    <p>Телефон: +380 (XX) XXX-XX-XX</p>
+                    <p>Email: info@weaponshop.com</p>
+                    <p>Адреса: м. Київ, вул. Прикладна, 1</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 WeaponShop. Всі права захищені.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

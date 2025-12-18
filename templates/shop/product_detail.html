@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumbs">
+        <a href="{% url 'shop:home' %}">Головна</a> / 
+        {% if category %}
+            <a href="{% url 'shop:category_detail' category.slug %}">{{ category.name }}</a> / 
+        {% endif %}
+        <span>{{ product.name }}</span>
+    </div>
+
+    <div class="product-detail">
+        <div class="product-images">
+            <div class="main-image">
+                {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}" id="main-product-image">
+                {% else %}
+                    <div class="product-placeholder">Немає зображення</div>
+                {% endif %}
+            </div>
+            <div class="thumbnail-images">
+                {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}" class="thumbnail active" onclick="changeImage('{{ product.image }}')">
+                {% endif %}
+                {% if product.image2 %}
+                    <img src="{{ product.image2 }}" alt="{{ product.name }}" class="thumbnail" onclick="changeImage('{{ product.image2 }}')">
+                {% endif %}
+                {% if product.image3 %}
+                    <img src="{{ product.image3 }}" alt="{{ product.name }}" class="thumbnail" onclick="changeImage('{{ product.image3 }}')">
+                {% endif %}
+                {% if product.image4 %}
+                    <img src="{{ product.image4 }}" alt="{{ product.name }}" class="thumbnail" onclick="changeImage('{{ product.image4 }}')">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="product-info-detail">
+            <h1>{{ product.name }}</h1>
+            {% if category %}
+                <p class="product-category">{{ category.name }}</p>
+            {% endif %}
+            <p class="product-price-large">{{ product.price }} грн</p>
+            
+            <div class="product-availability">
+                {% if product.stock > 0 %}
+                    <span class="in-stock">✓ В наявності ({{ product.stock }} шт.)</span>
+                {% else %}
+                    <span class="out-of-stock">✗ Немає в наявності</span>
+                {% endif %}
+            </div>
+
+            <div class="product-description">
+                <h3>Опис</h3>
+                <p>{{ product.description|linebreaks }}</p>
+            </div>
+
+            <div class="product-specs">
+                <h3>Характеристики</h3>
+                <table class="specs-table">
+                    {% if product.manufacturer %}
+                        <tr>
+                            <td data-label="Виробник">Виробник:</td>
+                            <td>{{ product.manufacturer }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if product.caliber %}
+                        <tr>
+                            <td data-label="Калібр">Калібр:</td>
+                            <td>{{ product.caliber }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if product.barrel_length %}
+                        <tr>
+                            <td data-label="Довжина ствола">Довжина ствола:</td>
+                            <td>{{ product.barrel_length }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if product.weight %}
+                        <tr>
+                            <td data-label="Вага">Вага:</td>
+                            <td>{{ product.weight }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if product.material %}
+                        <tr>
+                            <td data-label="Матеріал">Матеріал:</td>
+                            <td>{{ product.material }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            {% if product.stock > 0 %}
+            <form method="post" action="{% url 'shop:add_to_cart' product.id %}" class="add-to-cart-form">
+                {% csrf_token %}
+                <div class="quantity-selector">
+                    <label>Кількість:</label>
+                    <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-large">Додати до кошика</button>
+            </form>
+            {% else %}
+                <p class="out-of-stock-message">Товар тимчасово недоступний</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Секція коментарів -->
+    <section class="product-comments" style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #e9ecef;">
+        <h2 style="margin-bottom: 30px; color: #2c3e50;">Відгуки та коментарі</h2>
+        
+        <!-- Форма для додавання коментаря -->
+        {% if user.is_authenticated %}
+        <div class="comment-form-wrapper" style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 40px;">
+            <h3 style="margin-top: 0; margin-bottom: 20px; color: #2c3e50;">Залишити відгук</h3>
+            <form method="post" action="{% url 'shop:add_comment' product.slug %}">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px;">
+                    <label for="rating" style="display: block; margin-bottom: 8px; font-weight: 500; color: #495057;">Оцінка (необов'язково):</label>
+                    <select name="rating" id="rating" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                        <option value="">Без оцінки</option>
+                        <option value="5">5 - Відмінно</option>
+                        <option value="4">4 - Добре</option>
+                        <option value="3">3 - Задовільно</option>
+                        <option value="2">2 - Погано</option>
+                        <option value="1">1 - Дуже погано</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label for="comment-text" style="display: block; margin-bottom: 8px; font-weight: 500; color: #495057;">Ваш коментар *:</label>
+                    <textarea name="text" id="comment-text" rows="5" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 25px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 500;">Відправити коментар</button>
+            </form>
+        </div>
+        {% else %}
+        <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 30px; border-left: 4px solid #ffc107;">
+            <p style="margin: 0; color: #856404;">
+                <a href="{% url 'shop:login' %}" style="color: #007bff; text-decoration: none;">Увійдіть</a> або 
+                <a href="{% url 'shop:register' %}" style="color: #007bff; text-decoration: none;">зареєструйтеся</a>, щоб залишити коментар
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Список коментарів -->
+        <div class="comments-list">
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="comment-item" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #007bff;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div>
+                            <strong style="color: #2c3e50; font-size: 16px;">{{ comment.username }}</strong>
+                            {% if comment.rating %}
+                            <div style="margin-top: 5px;">
+                                <span style="color: #ffc107; font-size: 18px;">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= comment.rating %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span style="color: #6c757d; font-size: 14px; margin-left: 8px;">({{ comment.rating }}/5)</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <span style="color: #6c757d; font-size: 13px;">
+                            {% if comment.created_at %}
+                                {{ comment.created_at|date:"d.m.Y H:i" }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p style="color: #495057; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ comment.text }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <p style="margin: 0; font-size: 16px;">Поки що немає відгуків. Будьте першим!</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if related_products %}
+    <section class="related-products">
+        <h2>Схожі товари</h2>
+        <div class="products-grid">
+            {% for related in related_products %}
+                <div class="product-card">
+                    <a href="{% url 'shop:product_detail' related.slug %}">
+                        <div class="product-image">
+                            {% if related.image %}
+                                <img src="{{ related.image }}" alt="{{ related.name }}">
+                            {% else %}
+                                <div class="product-placeholder">Немає зображення</div>
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3>{{ related.name }}</h3>
+                            <p class="product-price">{{ related.price }} грн</p>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<script>
+function changeImage(imageUrl) {
+    document.getElementById('main-product-image').src = imageUrl;
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active');
+        if (thumb.src === imageUrl || thumb.src.includes(imageUrl.split('/').pop())) {
+            thumb.classList.add('active');
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+

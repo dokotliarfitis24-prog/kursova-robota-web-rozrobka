@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Оформлення замовлення - WeaponShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Оформлення замовлення</h1>
+    
+    <div class="checkout-layout">
+        <div class="checkout-form-section">
+            <form method="post" class="checkout-form">
+                {% csrf_token %}
+                <h2>Контактна інформація</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ form.first_name.label }}</label>
+                        {{ form.first_name }}
+                        {{ form.first_name.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.last_name.label }}</label>
+                        {{ form.last_name }}
+                        {{ form.last_name.errors }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {{ form.phone.errors }}
+                </div>
+
+                <h2>Адреса доставки</h2>
+                <div class="form-group">
+                    <label>{{ form.address.label }}</label>
+                    {{ form.address }}
+                    {{ form.address.errors }}
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ form.city.label }}</label>
+                        {{ form.city }}
+                        {{ form.city.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.postal_code.label }}</label>
+                        {{ form.postal_code }}
+                        {{ form.postal_code.errors }}
+                    </div>
+                </div>
+
+                <h2>Спосіб оплати</h2>
+                <div class="form-group">
+                    {{ form.payment_method }}
+                    {{ form.payment_method.errors }}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large">Підтвердити замовлення</button>
+            </form>
+        </div>
+
+        <div class="checkout-summary">
+            <h2>Ваше замовлення</h2>
+            <div class="order-items">
+                {% for item in cart_items %}
+                    <div class="order-item">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image }}" alt="{{ item.product.name }}">
+                        {% else %}
+                            <div class="order-item-placeholder">Немає фото</div>
+                        {% endif %}
+                        <div>
+                            <p><strong>{{ item.product.name }}</strong></p>
+                            <p>{{ item.quantity }} x {{ item.product.price }} грн</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="order-total">
+                <p><strong>Загальна сума: {{ total_price }} грн</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

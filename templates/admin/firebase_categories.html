@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Керування категоріями - Адмін-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .admin-header h1 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+        box-sizing: border-box;
+        height: auto;
+        line-height: 1.5;
+        vertical-align: middle;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .admin-header > div {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .category-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        display: none;
+    }
+    
+    .category-form.show {
+        display: block;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    
+    .categories-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .categories-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .categories-table th {
+        padding: 15px;
+        text-align: left;
+        background-color: #2c3e50;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .categories-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .categories-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Керування категоріями</h1>
+        <div>
+            <a href="{% url 'firebase_admin:home' %}" class="btn btn-secondary">← Назад</a>
+            <button onclick="showAddForm()" class="btn btn-primary">+ Додати категорію</button>
+        </div>
+    </div>
+
+    <div id="categoryForm" class="category-form">
+        <h3 id="formTitle">Додати категорію</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="category_id" id="category_id">
+            <input type="hidden" name="add" id="form_action_add">
+            <input type="hidden" name="edit" id="form_action_edit">
+            
+            <div class="form-group">
+                <label>Назва *</label>
+                <input type="text" name="name" id="form_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>URL (slug) *</label>
+                <input type="text" name="slug" id="form_slug" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Опис</label>
+                <textarea name="description" id="form_description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Зображення</label>
+                <input type="file" name="image" id="form_image" accept="image/*">
+                <input type="url" name="image_url" id="form_image_url" placeholder="Або вставте URL зображення" style="margin-top: 8px; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            </div>
+            
+            <div>
+                <button type="submit" class="btn btn-primary">Зберегти</button>
+                <button type="button" onclick="hideForm()" class="btn btn-secondary">Скасувати</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="categories-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Назва</th>
+                    <th>URL</th>
+                    <th>Опис</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td><strong>{{ category.name }}</strong></td>
+                    <td>{{ category.slug }}</td>
+                    <td>{{ category.description|truncatewords:10 }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button onclick="editCategory('{{ category.id }}')" class="btn btn-primary btn-sm">Редагувати</button>
+                            <form method="post" style="display: inline;" id="delete-form-{{ category.id }}" data-item-name="{{ category.name }}" data-item-type="категорію">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete" value="1">
+                                <input type="hidden" name="category_id" value="{{ category.id }}">
+                                <button type="button" onclick="confirmDelete('{{ category.id }}', '{{ category.name|escapejs }}', 'категорію')" class="btn btn-danger btn-sm">Видалити</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px;">Категорій немає</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+var categoriesData = {
+    {% for category in categories %}
+    '{{ category.id }}': {
+        name: '{{ category.name|escapejs }}',
+        slug: '{{ category.slug|escapejs }}',
+        description: '{{ category.description|escapejs }}',
+        image: '{{ category.image|default:""|escapejs }}',
+    },
+    {% endfor %}
+};
+
+window.showAddForm = function() {
+    var form = document.getElementById('categoryForm');
+    var formElement = form.querySelector('form');
+    
+    // Очищаємо форму
+    formElement.reset();
+    
+    // Показуємо форму
+    form.classList.add('show');
+    
+    // Встановлюємо правильні значення ПІСЛЯ reset
+    document.getElementById('formTitle').textContent = 'Додати категорію';
+    document.getElementById('form_action_add').value = '1';
+    document.getElementById('form_action_edit').value = '';
+    document.getElementById('category_id').value = '';
+};
+
+window.editCategory = function(categoryId) {
+    var category = categoriesData[categoryId];
+    if (!category) {
+        alert('Категорію не знайдено!');
+        return;
+    }
+    
+    var form = document.getElementById('categoryForm');
+    var formElement = form.querySelector('form');
+    
+    // Очищаємо форму
+    formElement.reset();
+    
+    // Показуємо форму
+    form.classList.add('show');
+    
+    // Встановлюємо правильні значення ПІСЛЯ reset
+    document.getElementById('formTitle').textContent = 'Редагувати категорію';
+    document.getElementById('form_action_add').value = '';  // ВАЖЛИВО: очищаємо add
+    document.getElementById('form_action_edit').value = '1';
+    document.getElementById('category_id').value = categoryId;
+    
+    // Заповнюємо поля
+    document.getElementById('form_name').value = category.name || '';
+    document.getElementById('form_slug').value = category.slug || '';
+    document.getElementById('form_description').value = category.description || '';
+    document.getElementById('form_image').value = '';  // Файлове поле очищаємо
+    document.getElementById('form_image_url').value = category.image || '';
+};
+
+window.hideForm = function() {
+    document.getElementById('categoryForm').classList.remove('show');
+};
+
+// Модальне вікно для підтвердження видалення
+function confirmDelete(itemId, itemName, itemType) {
+    // Створюємо модальне вікно
+    var modal = document.createElement('div');
+    modal.id = 'delete-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+    
+    var modalContent = document.createElement('div');
+    modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+    
+    modalContent.innerHTML = `
+        <h2 style="margin-top: 0; color: #dc3545; font-size: 24px;">Підтвердження видалення</h2>
+        <p style="margin-bottom: 20px; color: #333;">Для підтвердження видалення ${itemType} <strong>"${itemName}"</strong>, введіть її назву:</p>
+        <input type="text" id="delete-confirm-input" placeholder="Введіть назву для підтвердження" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; margin-bottom: 20px; box-sizing: border-box;">
+        <div id="delete-error" style="color: #dc3545; margin-bottom: 15px; font-size: 14px; display: none;"></div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">Скасувати</button>
+            <button type="button" onclick="submitDelete('${itemId}', '${itemName.replace(/'/g, "\\'")}', '${itemType}')" class="btn btn-danger">Видалити</button>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Фокус на поле введення
+    setTimeout(function() {
+        document.getElementById('delete-confirm-input').focus();
+    }, 100);
+    
+    // Закриття по Escape
+    var escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Закриття по кліку на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+}
+
+function closeDeleteModal() {
+    var modal = document.getElementById('delete-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function submitDelete(itemId, itemName, itemType) {
+    var input = document.getElementById('delete-confirm-input');
+    var errorDiv = document.getElementById('delete-error');
+    var enteredName = input.value.trim();
+    
+    if (enteredName !== itemName) {
+        errorDiv.textContent = 'Назва не співпадає! Будь ласка, введіть правильну назву.';
+        errorDiv.style.display = 'block';
+        input.style.borderColor = '#dc3545';
+        input.focus();
+        return;
+    }
+    
+    // Якщо назва співпадає, відправляємо форму
+    var form = document.getElementById('delete-form-' + itemId);
+    if (form) {
+        closeDeleteModal();
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+
